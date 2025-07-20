@@ -38,13 +38,10 @@ describe('fileOperations', () => {
             jest.mocked(fs.existsSync).mockReturnValue(false);
             jest.mocked(fs.mkdirSync).mockImplementation();
 
-            const today = new Date();
-            const year = today.getFullYear();
-            const month = String(today.getMonth() + 1).padStart(2, '0');
-            const day = String(today.getDate()).padStart(2, '0');
-            const expectedFolder = `${year}${month}${day}`;
+            const targetDate = new Date(2024, 2, 15); // 2024-03-15
+            const expectedFolder = '20240315';
 
-            const result = createDestinationFolder();
+            const result = createDestinationFolder(targetDate);
 
             expect(result).toBe(path.join(mockHomedir, 'Desktop', expectedFolder));
             expect(fs.mkdirSync).toHaveBeenCalledWith(
@@ -75,10 +72,12 @@ describe('fileOperations', () => {
         });
 
         it('同名同サイズのファイルをスキップする', async () => {
+            // shouldSkipFile内でfs.existsSync、メインロジックでもfs.existsSyncが呼ばれる
             jest.mocked(fs.existsSync).mockReturnValue(true);
             mockStat
-                .mockResolvedValueOnce({ size: 1000 }) // source file
-                .mockResolvedValueOnce({ size: 1000 }); // destination file
+                .mockResolvedValueOnce({ size: 1000 }) // shouldSkipFile: source file
+                .mockResolvedValueOnce({ size: 1000 }) // shouldSkipFile: destination file
+                .mockResolvedValueOnce({ size: 1000 }); // actionLoggers.skip: destination file
 
             const result = await copyFilesDifferential([mockSourceFiles[0]], mockDestinationFolder);
 
@@ -90,8 +89,10 @@ describe('fileOperations', () => {
         it('同名異サイズのファイルを上書きする', async () => {
             jest.mocked(fs.existsSync).mockReturnValue(true);
             mockStat
-                .mockResolvedValueOnce({ size: 2000 }) // source file
-                .mockResolvedValueOnce({ size: 1000 }); // destination file
+                .mockResolvedValueOnce({ size: 2000 }) // shouldSkipFile: source file
+                .mockResolvedValueOnce({ size: 1000 }) // shouldSkipFile: destination file
+                .mockResolvedValueOnce({ size: 2000 }) // actionLoggers.overwrite: source file
+                .mockResolvedValueOnce({ size: 1000 }); // actionLoggers.overwrite: destination file
 
             const result = await copyFilesDifferential([mockSourceFiles[0]], mockDestinationFolder);
 
@@ -104,15 +105,20 @@ describe('fileOperations', () => {
             const mockFiles = ['/source/new.dng', '/source/same.dng', '/source/different.dng'];
             
             jest.mocked(fs.existsSync)
-                .mockReturnValueOnce(false) // new.dng: 存在しない
-                .mockReturnValueOnce(true)  // same.dng: 存在する
-                .mockReturnValueOnce(true); // different.dng: 存在する
+                .mockReturnValueOnce(false) // new.dng: shouldSkipFile内
+                .mockReturnValueOnce(false) // new.dng: メインロジック内
+                .mockReturnValueOnce(true)  // same.dng: shouldSkipFile内
+                .mockReturnValueOnce(true)  // different.dng: shouldSkipFile内
+                .mockReturnValueOnce(true); // different.dng: メインロジック内
 
             mockStat
-                .mockResolvedValueOnce({ size: 1500 }) // same.dng source
-                .mockResolvedValueOnce({ size: 1500 }) // same.dng dest (同サイズ)
-                .mockResolvedValueOnce({ size: 2500 }) // different.dng source
-                .mockResolvedValueOnce({ size: 1000 }); // different.dng dest (異サイズ)
+                .mockResolvedValueOnce({ size: 1500 }) // same.dng: shouldSkipFile source
+                .mockResolvedValueOnce({ size: 1500 }) // same.dng: shouldSkipFile dest (同サイズ)
+                .mockResolvedValueOnce({ size: 1500 }) // same.dng: actionLoggers.skip dest
+                .mockResolvedValueOnce({ size: 2500 }) // different.dng: shouldSkipFile source
+                .mockResolvedValueOnce({ size: 1000 }) // different.dng: shouldSkipFile dest (異サイズ)
+                .mockResolvedValueOnce({ size: 2500 }) // different.dng: actionLoggers.overwrite source
+                .mockResolvedValueOnce({ size: 1000 }); // different.dng: actionLoggers.overwrite dest
 
             const result = await copyFilesDifferential(mockFiles, mockDestinationFolder);
 
