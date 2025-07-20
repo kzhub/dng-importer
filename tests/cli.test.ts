@@ -1,4 +1,5 @@
-import { parseArgs, showHelp, parseDate } from '../src/cli';
+import { parseArgs, showHelp } from '../src/cli';
+import { parseDate } from '../src/utils';
 
 describe('cli', () => {
     describe('parseArgs', () => {
