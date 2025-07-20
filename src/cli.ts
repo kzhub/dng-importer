@@ -32,18 +32,29 @@ export const parseArgs = (): Options => {
         date: null
     };
     
+    const argMap: { [key: string]: keyof Options } = {
+        '-p': 'path',
+        '--path': 'path',
+        '-d': 'date',
+        '--date': 'date',
+        '-h': 'help',
+        '--help': 'help'
+    };
+    
     for (let i = 0; i < args.length; i++) {
-        if (args[i] === '-p' || args[i] === '--path') {
-            options.path = args[i + 1];
-            i++;
-        } else if (args[i] === '-d' || args[i] === '--date') {
-            options.date = args[i + 1];
-            i++;
-        } else if (args[i] === '-h' || args[i] === '--help') {
-            options.help = true;
-        } else if (!args[i].startsWith('-') && !options.path) {
+        const arg = args[i];
+        const optionKey = argMap[arg];
+        
+        if (optionKey) {
+            if (optionKey === 'help') {
+                options[optionKey] = true;
+            } else {
+                options[optionKey] = args[i + 1];
+                i++;
+            }
+        } else if (!arg.startsWith('-') && !options.path) {
             // 最初の非オプション引数をパスとして扱う
-            options.path = args[i];
+            options.path = arg;
         }
     }
     
