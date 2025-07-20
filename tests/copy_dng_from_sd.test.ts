@@ -64,12 +64,9 @@ describe('copy_dng_from_sd', () => {
     describe('createDestinationFolder', () => {
         it('デスクトップにYYYYMMDD形式のフォルダパスを返す', () => {
             const mockHomedir = '/Users/test';
-            const mockOsHomedir = (os.homedir as jest.Mock);
-            mockOsHomedir.mockReturnValue(mockHomedir);
-            const mockFsExistsSync = (fs.existsSync as jest.Mock);
-            mockFsExistsSync.mockReturnValue(false);
-            const mockFsMkdirSync = (fs.mkdirSync as jest.Mock);
-            mockFsMkdirSync.mockImplementation();
+            jest.mocked(os.homedir).mockReturnValue(mockHomedir);
+            jest.mocked(fs.existsSync).mockReturnValue(false);
+            jest.mocked(fs.mkdirSync).mockImplementation();
 
             const today = new Date();
             const year = today.getFullYear();
@@ -92,13 +89,13 @@ describe('copy_dng_from_sd', () => {
         const mockDestinationFolder = '/dest';
 
         beforeEach(() => {
-            ((fs.existsSync as jest.Mock)).mockReturnValue(false);
+            jest.mocked(fs.existsSync).mockReturnValue(false);
             mockStat.mockClear();
             mockCopyFile.mockClear().mockResolvedValue(undefined);
         });
 
         it('新規ファイルをコピーする', async () => {
-            ((fs.existsSync as jest.Mock)).mockReturnValue(false);
+            jest.mocked(fs.existsSync).mockReturnValue(false);
 
             const result = await copyModule.copyFilesDifferential(mockSourceFiles, mockDestinationFolder);
 
@@ -108,7 +105,7 @@ describe('copy_dng_from_sd', () => {
         });
 
         it('同名同サイズのファイルをスキップする', async () => {
-            ((fs.existsSync as jest.Mock)).mockReturnValue(true);
+            jest.mocked(fs.existsSync).mockReturnValue(true);
             mockStat
                 .mockResolvedValueOnce({ size: 1000 }) // source file
                 .mockResolvedValueOnce({ size: 1000 }); // destination file
@@ -121,7 +118,7 @@ describe('copy_dng_from_sd', () => {
         });
 
         it('同名異サイズのファイルを上書きする', async () => {
-            ((fs.existsSync as jest.Mock)).mockReturnValue(true);
+            jest.mocked(fs.existsSync).mockReturnValue(true);
             mockStat
                 .mockResolvedValueOnce({ size: 2000 }) // source file
                 .mockResolvedValueOnce({ size: 1000 }); // destination file
@@ -136,7 +133,7 @@ describe('copy_dng_from_sd', () => {
         it('混在パターン（新規・スキップ・上書き）を正しく処理する', async () => {
             const mockFiles = ['/source/new.dng', '/source/same.dng', '/source/different.dng'];
             
-            ((fs.existsSync as jest.Mock))
+            jest.mocked(fs.existsSync)
                 .mockReturnValueOnce(false) // new.dng: 存在しない
                 .mockReturnValueOnce(true)  // same.dng: 存在する
                 .mockReturnValueOnce(true); // different.dng: 存在する
