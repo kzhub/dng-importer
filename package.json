@@ -2,7 +2,10 @@
   "name": "photo-process",
   "version": "1.0.0",
   "description": "Photo processing utilities",
-  "main": "copy_dng_from_sd.js",
+  "main": "dist/copy_dng_from_sd.js",
+  "bin": {
+    "copy-dng": "./dist/copy_dng_from_sd.js"
+  },
   "scripts": {
     "start": "node dist/copy_dng_from_sd.js",
     "start:js": "node copy_dng_from_sd.js",
