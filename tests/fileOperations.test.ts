@@ -2,24 +2,25 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 
+jest.mock('fs');
+jest.mock('os');
+
 // Promisifiedされた関数のモック
 const mockStat = jest.fn();
 const mockCopyFile = jest.fn();
 
-jest.mock('fs');
-jest.mock('os');
 jest.mock('util', () => ({
-    promisify: jest.fn((fn) => {
-        if (fn === fs.stat) return mockStat;
-        if (fn === fs.copyFile) return mockCopyFile;
+    promisify: jest.fn((fn: any) => {
+        // 関数名で判定
+        if (fn && fn.name === 'stat') return mockStat;
+        if (fn && fn.name === 'copyFile') return mockCopyFile;
         return jest.fn();
     })
 }));
 
-// 簡単なテストのためにrequireを使用
-const copyModule = require('../copy_dng_from_sd');
+import { createDestinationFolder, copyFilesDifferential } from '../src/fileOperations';
 
-describe('copy_dng_from_sd', () => {
+describe('fileOperations', () => {
     beforeEach(() => {
         jest.clearAllMocks();
         jest.spyOn(console, 'log').mockImplementation();
@@ -28,37 +29,6 @@ describe('copy_dng_from_sd', () => {
 
     afterEach(() => {
         jest.restoreAllMocks();
-    });
-
-    describe('parseArgs', () => {
-        const originalArgv = process.argv;
-
-        beforeEach(() => {
-            process.argv = ['node', 'script.js'];
-        });
-
-        afterEach(() => {
-            process.argv = originalArgv;
-        });
-
-        it('パスを直接引数として受け取る', () => {
-            process.argv.push('/Volumes/EOS_DIGITAL');
-            const result = copyModule.parseArgs();
-            expect(result.path).toBe('/Volumes/EOS_DIGITAL');
-            expect(result.help).toBe(false);
-        });
-
-        it('-pオプションでパスを指定できる', () => {
-            process.argv.push('-p', '/Volumes/SD_CARD');
-            const result = copyModule.parseArgs();
-            expect(result.path).toBe('/Volumes/SD_CARD');
-        });
-
-        it('-hオプションでヘルプフラグが立つ', () => {
-            process.argv.push('-h');
-            const result = copyModule.parseArgs();
-            expect(result.help).toBe(true);
-        });
     });
 
     describe('createDestinationFolder', () => {
@@ -74,7 +44,7 @@ describe('copy_dng_from_sd', () => {
             const day = String(today.getDate()).padStart(2, '0');
             const expectedFolder = `${year}${month}${day}`;
 
-            const result = copyModule.createDestinationFolder();
+            const result = createDestinationFolder();
 
             expect(result).toBe(path.join(mockHomedir, 'Desktop', expectedFolder));
             expect(fs.mkdirSync).toHaveBeenCalledWith(
@@ -97,7 +67,7 @@ describe('copy_dng_from_sd', () => {
         it('新規ファイルをコピーする', async () => {
             jest.mocked(fs.existsSync).mockReturnValue(false);
 
-            const result = await copyModule.copyFilesDifferential(mockSourceFiles, mockDestinationFolder);
+            const result = await copyFilesDifferential(mockSourceFiles, mockDestinationFolder);
 
             expect(result.copiedCount).toBe(2);
             expect(result.skippedCount).toBe(0);
@@ -110,7 +80,7 @@ describe('copy_dng_from_sd', () => {
                 .mockResolvedValueOnce({ size: 1000 }) // source file
                 .mockResolvedValueOnce({ size: 1000 }); // destination file
 
-            const result = await copyModule.copyFilesDifferential([mockSourceFiles[0]], mockDestinationFolder);
+            const result = await copyFilesDifferential([mockSourceFiles[0]], mockDestinationFolder);
 
             expect(result.copiedCount).toBe(0);
             expect(result.skippedCount).toBe(1);
@@ -123,7 +93,7 @@ describe('copy_dng_from_sd', () => {
                 .mockResolvedValueOnce({ size: 2000 }) // source file
                 .mockResolvedValueOnce({ size: 1000 }); // destination file
 
-            const result = await copyModule.copyFilesDifferential([mockSourceFiles[0]], mockDestinationFolder);
+            const result = await copyFilesDifferential([mockSourceFiles[0]], mockDestinationFolder);
 
             expect(result.copiedCount).toBe(1);
             expect(result.skippedCount).toBe(0);
@@ -144,7 +114,7 @@ describe('copy_dng_from_sd', () => {
                 .mockResolvedValueOnce({ size: 2500 }) // different.dng source
                 .mockResolvedValueOnce({ size: 1000 }); // different.dng dest (異サイズ)
 
-            const result = await copyModule.copyFilesDifferential(mockFiles, mockDestinationFolder);
+            const result = await copyFilesDifferential(mockFiles, mockDestinationFolder);
 
             expect(result.copiedCount).toBe(2); // new.dng + different.dng
             expect(result.skippedCount).toBe(1); // same.dng
