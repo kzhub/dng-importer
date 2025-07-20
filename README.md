@@ -17,8 +17,8 @@
 # プロジェクトをビルド
 yarn build
 
-# グローバルにインストール
-yarn global add .
+# グローバルにインストール）
+npm install -g .
 ```
 
 ### 2. ローカル開発
@@ -44,9 +44,6 @@ yarn start /Volumes/EOS_DIGITAL
 ```bash
 # 基本的な使い方
 copy-dng /Volumes/EOS_DIGITAL
-
-# オプション指定
-copy-dng -p /Volumes/SD_CARD
 
 # ヘルプ表示
 copy-dng -h
