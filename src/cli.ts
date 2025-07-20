@@ -1,15 +1,43 @@
 import type { Options } from './types';
 
+export const parseDate = (dateStr: string | null): Date => {
+    if (!dateStr) {
+        return new Date();
+    }
+    
+    // YYYY-MM-DD形式をパース
+    const match = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!match) {
+        console.error(`Error: 日付は YYYY-MM-DD 形式で指定してください (例: 2024-03-15)`);
+        process.exit(1);
+    }
+    
+    const [_, year, month, day] = match;
+    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    
+    // 有効な日付かチェック
+    if (isNaN(date.getTime())) {
+        console.error(`Error: 無効な日付です: ${dateStr}`);
+        process.exit(1);
+    }
+    
+    return date;
+};
+
 export const parseArgs = (): Options => {
     const args = process.argv.slice(2);
     const options: Options = {
         path: null,
-        help: false
+        help: false,
+        date: null
     };
     
     for (let i = 0; i < args.length; i++) {
         if (args[i] === '-p' || args[i] === '--path') {
             options.path = args[i + 1];
+            i++;
+        } else if (args[i] === '-d' || args[i] === '--date') {
+            options.date = args[i + 1];
             i++;
         } else if (args[i] === '-h' || args[i] === '--help') {
             options.help = true;
@@ -32,10 +60,13 @@ export const showHelp = (): void => {
 
 オプション:
   -p, --path <path>  SDカードのパスを指定
+  -d, --date <date>  対象日付を指定 (YYYY-MM-DD形式、デフォルト: 今日)
   -h, --help         このヘルプメッセージを表示
 
 例:
   yarn start /Volumes/EOS_DIGITAL
   yarn start -- -p /Volumes/EOS_DIGITAL
+  yarn start -- -p /Volumes/EOS_DIGITAL -d 2024-03-15
+  copy-dng /Volumes/EOS_DIGITAL -d 2024-03-15
 `);
 };

@@ -7,12 +7,11 @@ import type { CopyResult } from './types';
 const stat = promisify(fs.stat);
 const copyFile = promisify(fs.copyFile);
 
-export const createDestinationFolder = (): string => {
+export const createDestinationFolder = (targetDate: Date): string => {
     const desktop = path.join(os.homedir(), 'Desktop');
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
+    const year = targetDate.getFullYear();
+    const month = String(targetDate.getMonth() + 1).padStart(2, '0');
+    const day = String(targetDate.getDate()).padStart(2, '0');
     const folderName = `${year}${month}${day}`;
     
     const destinationPath = path.join(desktop, folderName);

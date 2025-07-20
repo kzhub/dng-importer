@@ -38,13 +38,10 @@ describe('fileOperations', () => {
             jest.mocked(fs.existsSync).mockReturnValue(false);
             jest.mocked(fs.mkdirSync).mockImplementation();
 
-            const today = new Date();
-            const year = today.getFullYear();
-            const month = String(today.getMonth() + 1).padStart(2, '0');
-            const day = String(today.getDate()).padStart(2, '0');
-            const expectedFolder = `${year}${month}${day}`;
+            const targetDate = new Date(2024, 2, 15); // 2024-03-15
+            const expectedFolder = '20240315';
 
-            const result = createDestinationFolder();
+            const result = createDestinationFolder(targetDate);
 
             expect(result).toBe(path.join(mockHomedir, 'Desktop', expectedFolder));
             expect(fs.mkdirSync).toHaveBeenCalledWith(

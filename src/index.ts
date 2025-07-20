@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import * as fs from 'fs';
-import { parseArgs, showHelp } from './cli';
+import { parseArgs, showHelp, parseDate } from './cli';
 import { findDNGFiles } from './fileSearch';
 import { createDestinationFolder, copyFilesDifferential } from './fileOperations';
 
@@ -29,19 +29,26 @@ const main = async (): Promise<void> => {
     }
     
     const selectedVolume = options.path;
-    console.log(`指定されたパスを使用: ${selectedVolume}`);
+    const targetDate = parseDate(options.date);
     
-    console.log(`\n今日のDNGファイルを検索中: ${selectedVolume}`);
-    const dngFiles = await findDNGFiles(selectedVolume, true);
+    console.log(`指定されたパスを使用: ${selectedVolume}`);
+    if (options.date) {
+        console.log(`対象日付: ${options.date}`);
+    } else {
+        console.log(`対象日付: 今日 (${targetDate.toISOString().split('T')[0]})`);
+    }
+    
+    console.log(`\n指定日のDNGファイルを検索中: ${selectedVolume}`);
+    const dngFiles = await findDNGFiles(selectedVolume, targetDate);
     
     if (dngFiles.length === 0) {
-        console.log('今日のDNGファイルが見つかりませんでした。');
+        console.log('指定日のDNGファイルが見つかりませんでした。');
         process.exit(0);
     }
     
-    console.log(`${dngFiles.length} 個の今日のDNGファイルが見つかりました`);
+    console.log(`${dngFiles.length} 個の指定日のDNGファイルが見つかりました`);
     
-    const destinationFolder = createDestinationFolder();
+    const destinationFolder = createDestinationFolder(targetDate);
     console.log(`\n保存先フォルダ: ${destinationFolder}`);
     
     const { copiedCount, skippedCount } = await copyFilesDifferential(dngFiles, destinationFolder);

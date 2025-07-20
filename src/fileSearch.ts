@@ -5,10 +5,10 @@ import { promisify } from 'util';
 const readdir = promisify(fs.readdir);
 const stat = promisify(fs.stat);
 
-export const findDNGFiles = async (volumePath: string, todayOnly: boolean = true): Promise<string[]> => {
+export const findDNGFiles = async (volumePath: string, targetDate: Date): Promise<string[]> => {
     const dngFiles: string[] = [];
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const targetDateStart = new Date(targetDate);
+    targetDateStart.setHours(0, 0, 0, 0);
     
     const searchDir = async (dir: string): Promise<void> => {
         try {
@@ -21,13 +21,9 @@ export const findDNGFiles = async (volumePath: string, todayOnly: boolean = true
                 if (stats.isDirectory()) {
                     await searchDir(filePath);
                 } else if (file.toLowerCase().endsWith('.dng')) {
-                    if (todayOnly) {
-                        const fileDate = new Date(stats.mtime);
-                        fileDate.setHours(0, 0, 0, 0);
-                        if (fileDate.getTime() === today.getTime()) {
-                            dngFiles.push(filePath);
-                        }
-                    } else {
+                    const fileDate = new Date(stats.mtime);
+                    fileDate.setHours(0, 0, 0, 0);
+                    if (fileDate.getTime() === targetDateStart.getTime()) {
                         dngFiles.push(filePath);
                     }
                 }
