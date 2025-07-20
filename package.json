@@ -1,0 +1,21 @@
+{
+  "name": "photo-process",
+  "version": "1.0.0",
+  "description": "Photo processing utilities",
+  "main": "copy_dng_from_sd.js",
+  "scripts": {
+    "start": "node dist/copy_dng_from_sd.js",
+    "start:js": "node copy_dng_from_sd.js",
+    "build": "yarn tsc",
+    "dev": "yarn ts-node copy_dng_from_sd.ts",
+    "prebuild": "rm -rf dist"
+  },
+  "keywords": ["photo", "dng", "raw"],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.0.0"
+  }
+}
