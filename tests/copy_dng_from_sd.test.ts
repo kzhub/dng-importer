@@ -64,9 +64,12 @@ describe('copy_dng_from_sd', () => {
     describe('createDestinationFolder', () => {
         it('デスクトップにYYYYMMDD形式のフォルダパスを返す', () => {
             const mockHomedir = '/Users/test';
-            (os.homedir as jest.Mock).mockReturnValue(mockHomedir);
-            (fs.existsSync as jest.Mock).mockReturnValue(false);
-            (fs.mkdirSync as jest.Mock).mockImplementation();
+            const mockOsHomedir = os.homedir as jest.Mock;
+            mockOsHomedir.mockReturnValue(mockHomedir);
+            const mockFsExistsSync = fs.existsSync as jest.Mock;
+            mockFsExistsSync.mockReturnValue(false);
+            const mockFsMkdirSync = fs.mkdirSync as jest.Mock;
+            mockFsMkdirSync.mockImplementation();
 
             const today = new Date();
             const year = today.getFullYear();
