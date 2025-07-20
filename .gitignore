@@ -10,6 +10,8 @@ build/
 
 # Compiled JavaScript files
 *.js
+!jest.config.js
+!jest.config.ci.js
 
 # IDE
 .vscode/
