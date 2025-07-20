@@ -9,17 +9,17 @@ const readdir = promisify(fs.readdir);
 const stat = promisify(fs.stat);
 const copyFile = promisify(fs.copyFile);
 
-interface Options {
+export interface Options {
     path: string | null;
     help: boolean;
 }
 
-interface CopyResult {
+export interface CopyResult {
     copiedCount: number;
     skippedCount: number;
 }
 
-const parseArgs = (): Options => {
+export const parseArgs = (): Options => {
     const args = process.argv.slice(2);
     const options: Options = {
         path: null,
@@ -60,7 +60,7 @@ const showHelp = (): void => {
 };
 
 
-const findDNGFiles = async (volumePath: string, todayOnly: boolean = true): Promise<string[]> => {
+export const findDNGFiles = async (volumePath: string, todayOnly: boolean = true): Promise<string[]> => {
     const dngFiles: string[] = [];
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -96,7 +96,7 @@ const findDNGFiles = async (volumePath: string, todayOnly: boolean = true): Prom
     return dngFiles;
 };
 
-const createDestinationFolder = (): string => {
+export const createDestinationFolder = (): string => {
     const desktop = path.join(os.homedir(), 'Desktop');
     const today = new Date();
     const year = today.getFullYear();
@@ -113,7 +113,7 @@ const createDestinationFolder = (): string => {
     return destinationPath;
 };
 
-const copyFilesDifferential = async (sourceFiles: string[], destinationFolder: string): Promise<CopyResult> => {
+export const copyFilesDifferential = async (sourceFiles: string[], destinationFolder: string): Promise<CopyResult> => {
     let copiedCount = 0;
     let skippedCount = 0;
     
@@ -199,7 +199,9 @@ const main = async (): Promise<void> => {
     console.log(`  合計: ${dngFiles.length} ファイル`);
 };
 
-main().catch((error) => {
-    console.error('エラー:', error);
-    process.exit(1);
-});
+if (require.main === module) {
+    main().catch((error) => {
+        console.error('エラー:', error);
+        process.exit(1);
+    });
+}

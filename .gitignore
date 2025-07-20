@@ -8,6 +8,9 @@ dist/
 build/
 *.js.map
 
+# Compiled JavaScript files
+*.js
+
 # IDE
 .vscode/
 .idea/
