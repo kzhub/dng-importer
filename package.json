@@ -10,6 +10,7 @@
     "start": "node dist/copy_dng_from_sd.js",
     "start:js": "node copy_dng_from_sd.js",
     "build": "yarn tsc",
+    "postbuild": "chmod +x dist/copy_dng_from_sd.js",
     "dev": "yarn ts-node copy_dng_from_sd.ts",
     "prebuild": "rm -rf dist",
     "test": "jest",
