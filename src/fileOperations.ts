@@ -23,6 +23,44 @@ export const createDestinationFolder = (targetDate: Date): string => {
     return destinationPath;
 };
 
+type CopyAction = 'skip' | 'copy' | 'overwrite';
+
+const shouldSkipFile = async (sourceFile: string, destinationFile: string): Promise<boolean> => {
+    if (!fs.existsSync(destinationFile)) {
+        return false;
+    }
+    
+    const [sourceStats, destStats] = await Promise.all([
+        stat(sourceFile),
+        stat(destinationFile)
+    ]);
+    
+    return sourceStats.size === destStats.size;
+};
+
+const actionLoggers: Record<CopyAction, (sourceFile: string, destinationFile: string) => Promise<void>> = {
+    skip: async (sourceFile: string, destinationFile: string) => {
+        const filename = path.basename(sourceFile);
+        const destStats = await stat(destinationFile);
+        console.log(`⏭️  スキップ: ${filename} (既存: ${destStats.size} bytes)`);
+    },
+    
+    overwrite: async (sourceFile: string, destinationFile: string) => {
+        const filename = path.basename(sourceFile);
+        const [sourceStats, destStats] = await Promise.all([
+            stat(sourceFile),
+            stat(destinationFile)
+        ]);
+        console.log(`🔄 上書き: ${filename} (元: ${sourceStats.size} bytes, 既存: ${destStats.size} bytes)`);
+    },
+    
+    copy: async (sourceFile: string, destinationFile: string) => {
+        const filename = path.basename(sourceFile);
+        console.log(`📋 新規コピー: ${filename}`);
+    }
+};
+
+
 export const copyFilesDifferential = async (sourceFiles: string[], destinationFolder: string): Promise<CopyResult> => {
     let copiedCount = 0;
     let skippedCount = 0;
@@ -36,20 +74,16 @@ export const copyFilesDifferential = async (sourceFiles: string[], destinationFo
         const destinationFile = path.join(destinationFolder, filename);
         
         try {
-            if (fs.existsSync(destinationFile)) {
-                const sourceStats = await stat(sourceFile);
-                const destStats = await stat(destinationFile);
-                
-                if (sourceStats.size === destStats.size) {
-                    console.log(`⏭️  スキップ: ${filename} (既存: ${destStats.size} bytes)`);
-                    skippedCount++;
-                    continue;
-                } else {
-                    console.log(`🔄 上書き: ${filename} (元: ${sourceStats.size} bytes, 既存: ${destStats.size} bytes)`);
-                }
-            } else {
-                console.log(`📋 新規コピー: ${filename}`);
+            const shouldSkip = await shouldSkipFile(sourceFile, destinationFile);
+            
+            if (shouldSkip) {
+                await actionLoggers.skip(sourceFile, destinationFile);
+                skippedCount++;
+                continue;
             }
+            
+            const action: CopyAction = fs.existsSync(destinationFile) ? 'overwrite' : 'copy';
+            await actionLoggers[action](sourceFile, destinationFile);
             
             await copyFile(sourceFile, destinationFile);
             copiedCount++;
